@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Collaboration App with Comments</title>
+    <script type="module">
+      // Import necessary Firebase modules
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        set,
+        onValue,
+        push,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNwApaLmfjk1cZBA0kZZMkYEnr39VZUyg",
+        authDomain: "realtimecollabapp.firebaseapp.com",
+        databaseURL: "https://realtimecollabapp-default-rtdb.firebaseio.com",
+        projectId: "realtimecollabapp",
+        storageBucket: "realtimecollabapp.firebasestorage.app",
+        messagingSenderId: "955627884879",
+        appId: "1:955627884879:web:4f5159d814956ed1ce753a",
+        measurementId: "G-9311P887T1",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // DOM Elements
+      const contentArea = document.getElementById("content-area");
+      const messagesList = document.getElementById("messages");
+      const toolbar = document.getElementById("toolbar");
+      const useCasesButton = document.getElementById("use-cases-button");
+
+      const useCasesContainer = document.getElementById("use-cases-container");
+      // Toggle Use Cases
+      useCasesButton.addEventListener("click", () => {
+        useCasesContainer.style.display =
+          useCasesContainer.style.display === "none" ? "block" : "none";
+      });
+
+      // Sync content area and cursor position in real-time
+      contentArea.addEventListener("input", () => {
+        const content = contentArea.innerHTML;
+        const selection = window.getSelection();
+        const cursorPosition = selection.focusOffset;
+        set(ref(db, "content"), { content, cursorPosition });
+      });
+
+      onValue(ref(db, "content"), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          if (data.content !== contentArea.innerHTML) {
+            contentArea.innerHTML = data.content;
+            const range = document.createRange();
+            const selection = window.getSelection();
+            range.setStart(
+              contentArea.firstChild || contentArea,
+              data.cursorPosition || 0
+            );
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      });
+
+      // Change Highlights
+      contentArea.addEventListener("input", () => {
+        contentArea.style.backgroundColor = "#f0f8ff";
+        setTimeout(() => (contentArea.style.backgroundColor = "white"), 1000);
+      });
+
+      // Add new messages
+      function addMessage(text) {
+        const newMessageRef = push(ref(db, "messages"));
+        set(newMessageRef, { text });
+      }
+
+      // Listen for new messages
+      onValue(ref(db, "messages"), (snapshot) => {
+        const messages = snapshot.val();
+        messagesList.innerHTML = ""; // Clear old messages
+        if (messages) {
+          Object.keys(messages).forEach((key) => {
+            const message = messages[key];
+            const li = document.createElement("li");
+            li.innerHTML = `
+                        <span>${message.text}</span>
+                        <button onclick="downloadMessage('${message.text}')">Download</button>
+                        <button onclick="deleteMessage('${key}')">X</button>`;
+            li.dataset.key = key;
+            messagesList.appendChild(li);
+          });
+        }
+      });
+
+      // Download a message
+      window.downloadMessage = (text) => {
+        const blob = new Blob([text], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "message.txt";
+        a.click();
+      };
+
+      // Delete a message
+      window.deleteMessage = (key) => {
+        remove(ref(db, `messages/${key}`));
+      };
+
+      // Add Comments
+      contentArea.addEventListener("mouseup", () => {
+        const selection = window.getSelection();
+        const selectedText = selection.toString();
+        if (selectedText) {
+          const comment = prompt("Add a comment for: " + selectedText);
+          if (comment) {
+            const commentData = {
+              text: selectedText,
+              comment,
+              timestamp: new Date().toISOString(),
+            };
+            push(ref(db, "comments"), commentData);
+          }
+        }
+      });
+
+      // Display Comments
+      const commentsList = document.createElement("ul");
+      commentsList.style.padding = "10px";
+      commentsList.style.listStyle = "none";
+      document.body.appendChild(commentsList);
+
+      onValue(ref(db, "comments"), (snapshot) => {
+        const comments = snapshot.val();
+        commentsList.innerHTML = ""; // Clear old comments
+        if (comments) {
+          Object.values(comments).forEach((comment) => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>${comment.text}</strong>: ${comment.comment}`;
+            commentsList.appendChild(li);
+          });
+        }
+      });
+
+      // Enhanced Toolbar
+      toolbar.addEventListener("click", (event) => {
+        const action = event.target.dataset.action;
+        if (action) {
+          document.execCommand(action, false, null);
+        }
+      });
+    </script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      .app-container {
+        display: flex;
+        flex: 1;
+      }
+
+      .editor {
+        flex: 3;
+        padding: 10px;
+        border-right: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        margin-bottom: 10px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .toolbar button {
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+        cursor: pointer;
+      }
+
+      .content-area {
+        flex: 1;
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow-y: auto;
+        background-color: #fff;
+      }
+
+      .sidebar {
+        flex: 1;
+        padding: 10px;
+        background: #f3f3f3;
+        overflow-y: auto;
+      }
+
+      .sidebar ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .sidebar li {
+        padding: 10px;
+        margin-bottom: 10px;
+        background: #fff;
+        border: 1px solid #ccc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .sidebar li button {
+        margin-left: 5px;
+      }
+
+      header {
+        background: #0078d7;
+        color: white;
+        padding: 10px;
+        text-align: center;
+      }
+      #use-cases-container {
+        display: none;
+        padding: 10px;
+        background: #f0f0f0;
+        border: 1px solid #ccc;
+      }
+
+      #use-cases-container h3 {
+        margin-top: 0;
+      }
+
+      #use-cases-button {
+        padding: 10px 20px;
+        background: #0078d7;
+        color: white;
+        border: none;
+        cursor: pointer;
+        margin: 10px;
+      }
+
+      #use-cases-button:hover {
+        background: #005bb5;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Real-Time Collaboration with Comments</h1>
+    </header>
+    <button id="use-cases-button">Show/Hide Use Cases</button>
+    <div id="use-cases-container">
+      <h3>Use Cases:</h3>
+      <ul>
+        <li>
+          <strong>Real-Time Speech Notes:</strong> As students speak,
+          instructors and peers type in real-time feedback and discuss it at the
+          end of the lesson.
+        </li>
+        <li>
+          <strong>Speaking Practice with Instant Corrections:</strong> The
+          instructor types corrections or rephrases sentences in real time as
+          students speak.
+        </li>
+        <li>
+          <strong>Pronunciation Drills:</strong> As students speak, the
+          instructor highlights problematic words and adds comments with
+          phonetic guides or corrections.
+        </li>
+        <li>
+          <strong>Listening and Summarization:</strong> After a student or
+          instructor speaks, others type summaries in the editor (key points)
+          and then summarize in the target language.
+        </li>
+        <li>
+          <strong>Feedback Panels:</strong> The instructor creates a feedback
+          template in the editor (e.g., strengths, weaknesses, suggestions).
+          Students fill in their feedback as they listen to their peers.
+        </li>
+      </ul>
+    </div>
+    <div class="app-container">
+      <div class="editor">
+        <div id="toolbar" class="toolbar">
+          <button data-action="bold">B</button>
+          <button data-action="italic">I</button>
+          <button data-action="underline">U</button>
+          <button data-action="backColor">Highlight</button>
+        </div>
+        <div id="content-area" contenteditable="true" class="content-area">
+          <!-- User input goes here -->
+        </div>
+      </div>
+      <div class="sidebar">
+        <ul id="messages">
+          <!-- Real-time messages go here -->
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>
