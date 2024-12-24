@@ -1,37 +1,145 @@
+/* 
+  1) Basic Reset & Layout 
+  - Keep the full viewport height for the real-time editor layout
+  - Remove conflicting max-width settings so the layout remains flexible
+*/
 body {
   font-family: Arial, sans-serif;
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* If you DO want a max-width for a narrower page, uncomment:
+   max-width: 900px;
+   margin: 0 auto;
+  */
 }
 
+/* 2) Header */
+header {
+  background: #0078d7;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+/* 3) Use Cases Toggle Button */
+#use-cases-button {
+  padding: 10px 20px;
+  background: #0078d7;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin: 10px;
+  font-size: 16px; /* matched to the external CSS 'button' font-size */
+}
+
+#use-cases-button:hover {
+  background: #005bb5;
+}
+
+/* 4) Use Cases Container */
+#use-cases-container {
+  display: none; /* hidden by default, toggled in JS */
+  padding: 10px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  margin: 0 10px; /* a little space around the container */
+}
+
+#use-cases-container h3 {
+  margin-top: 0;
+}
+
+/* 5) Main App Container Layout */
+.app-container {
+  display: flex;
+  flex: 1; /* expand to fill the remaining height */
+  overflow: hidden; /* ensures columns don’t extend page height */
+}
+
+/* 6) Editor Column */
+.editor {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-right: 1px solid #ccc;
+  overflow: hidden;
+}
+
+/* 7) Toolbar */
+.toolbar {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.toolbar button {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.toolbar button:hover {
+  background: #e6e6e6;
+}
+
+/* 8) Content Area (Editable) */
+.content-area {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+  background-color: #fff;
+  text-align: left;
+}
+
+/* 9) Sidebar (Messages) */
+.sidebar {
+  flex: 1;
+  padding: 10px;
+  background: #f3f3f3;
+  overflow-y: auto;
+}
+
+/* 10) Sidebar Messages */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar li button {
+  margin-left: 5px;
+  padding: 5px 8px; /* slightly smaller than standard form button */
+  font-size: 14px;
+}
+
+/* 11) Additional Global Elements 
+   (Merged from your second CSS snippet)
+*/
+
+/* Center any h1, h2 globally (nice for subheadings) */
 h1,
 h2 {
   text-align: center;
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-input,
-textarea {
-  padding: 10px;
-  font-size: 16px;
-}
-
-button {
-  padding: 10px;
-  background-color: maroon;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
+/* Tips or notes styling */
 .tip {
   padding: 15px;
   background: #f9f9f9;
@@ -45,24 +153,63 @@ button {
   margin-bottom: 5px;
 }
 
+/* Horizontal rule styling */
 hr {
   border: none;
   height: 1px;
   background: #ddd;
   margin: 10px 0;
 }
-/* Styling for Canvas */
+
+/* Canvas styling (if used) */
 #chalkboard {
   border: 2px solid black;
   background-color: #333;
   margin-top: 20px;
 }
-/* Basic styling for the page */
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  margin: 20px;
+
+/* 
+   12) Form Inputs & Buttons
+   If you have a separate form on the page, these styles apply.
+   Adjust or remove as needed if you don't have any forms.
+*/
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
 }
+
+input,
+textarea {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+}
+
+button {
+  /* 
+    NOTE: This affects all <button> tags not already styled more specifically.
+    We’ll keep a similar look, but not override our .toolbar or .sidebar li button. 
+  */
+  padding: 10px;
+  background-color: maroon;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/*
+  If you prefer a consistent color (like #0078d7) for ALL buttons,
+  you can replace the above background-color with #0078d7 
+  or comment out these lines entirely and rely on more specific button styles.
+*/
+
+/* 
+   13) Messages Container 
+   (If used separately from .sidebar, we keep it center-aligned)
+*/
 #messages-container {
   margin-top: 20px;
   max-width: 600px;
