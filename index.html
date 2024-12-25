@@ -410,7 +410,7 @@
 
   <body>
     <!-- === HEADER === -->
-    <header>Real-Time Collaboration App</header>
+    <header>Real-Time Collaboration</header>
 
     <!-- === USE CASES TOGGLE BUTTON AND CONTAINER === -->
     <button id="use-cases-button" title="Show/Hide Use Cases">
@@ -618,12 +618,9 @@
       /****************************************
        * 4) ADD SOUNDS
        ****************************************/
-      const sendSound = new Audio(
-        "https://actions.google.com/sounds/v1/cartoon/slide_whistle_tooting.ogg"
-      );
-      const typingSound = new Audio(
-        "https://actions.google.com/sounds/v1/foley/power_up_03.ogg"
-      );
+      // Replace remote URLs with your mp3 file names:
+      const sendSound = new Audio("audio1.mp3"); // For message delivery
+      const typingSound = new Audio("audio2.mp3"); // For typing
       // Lower volumes a bit
       sendSound.volume = 0.3;
       typingSound.volume = 0.2;
