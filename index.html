@@ -5,44 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real-Time Collaboration App</title>
 
-    <!-- === CSS Styles === -->
+    <!-- === STYLES === -->
     <style>
-      /* Basic Reset & Layout */
+      /* Basic reset & layout */
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
-
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background: #f8f9fa; /* Light gray background for modern look */
+        background: #f5f5f7; /* Light grey Apple-like background */
       }
 
       header {
-        background: linear-gradient(135deg, #4c81ff, #1e40af);
+        background: linear-gradient(135deg, #a2b9ff, #6d83e0);
         color: white;
         padding: 16px;
         text-align: center;
+        font-size: 1.4rem;
+        font-weight: 500;
       }
 
       /* Use Cases Toggle */
       #use-cases-button {
         padding: 12px 20px;
-        background: #4c81ff;
+        background: #6d83e0;
         color: white;
         border: none;
         cursor: pointer;
         margin: 12px;
         font-size: 16px;
-        border-radius: 4px;
+        border-radius: 6px;
         transition: background 0.2s ease;
       }
       #use-cases-button:hover {
-        background: #3b5ecc;
+        background: #5568b5;
       }
 
       /* Transition for fade in/out of Use Cases */
@@ -54,8 +56,7 @@
         margin: 0 12px;
         background: #ffffff;
         border: 1px solid #ccc;
-        padding: 0 12px;
-        border-radius: 4px;
+        border-radius: 8px;
       }
       #use-cases-container.show {
         max-height: 300px;
@@ -74,6 +75,7 @@
         display: flex;
         flex: 1;
         overflow: hidden;
+        color: #333;
       }
       .editor {
         flex: 2;
@@ -92,13 +94,14 @@
       .toolbar button {
         padding: 6px 12px;
         border: 1px solid #ccc;
-        background: #f9f9f9;
+        background: #fafafa;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 6px;
         transition: background 0.2s;
+        font-size: 0.9rem;
       }
       .toolbar button:hover {
-        background: #eaeaea;
+        background: #ebebeb;
       }
       .content-area {
         flex: 1;
@@ -106,10 +109,9 @@
         padding: 16px;
         overflow-y: auto;
         position: relative;
-        border-radius: 4px;
+        border-radius: 6px;
         background: #ffffff;
       }
-      /* Editor placeholder style */
       .placeholder {
         color: #aaa;
         pointer-events: none;
@@ -119,12 +121,17 @@
         font-style: italic;
       }
 
-      /* Mouse Cursor Dots for other users */
+      /* Editor double-click highlight style */
+      .double-click-highlight {
+        background: #fcf3a2; /* mild yellow */
+      }
+
+      /* Mouse Cursor Dots for all users (including me) */
       .user-cursor {
         position: absolute;
         border-radius: 50%;
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         transform: translate(-50%, -50%);
         pointer-events: none;
         display: flex;
@@ -134,32 +141,32 @@
       .user-cursor::after {
         content: attr(data-name);
         position: absolute;
-        top: 14px;
+        top: 16px;
         left: 50%;
         transform: translateX(-50%);
         background: rgba(0, 0, 0, 0.7);
         color: #fff;
         padding: 2px 6px;
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 10px;
         white-space: nowrap;
       }
 
       /* "Add Comment" button near selection */
       #add-comment-btn {
-        display: none; /* shown dynamically when user highlights text */
+        display: none;
         position: absolute;
         padding: 8px 10px;
-        background: #4c81ff;
+        background: #5568b5;
         color: #fff;
         cursor: pointer;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 12px;
         z-index: 999;
       }
       #add-comment-btn:hover {
-        background: #3b5ecc;
+        background: #404e86;
       }
 
       /* Sidebar */
@@ -168,6 +175,8 @@
         padding: 16px;
         background: #fefefe;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
       }
       .sidebar h2 {
         margin-bottom: 12px;
@@ -186,6 +195,12 @@
       }
 
       /* Message Section */
+      .messages-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
       #message-form {
         display: flex;
         gap: 8px;
@@ -195,26 +210,39 @@
         flex: 1;
         padding: 10px;
         font-size: 14px;
-        border-radius: 4px;
+        border-radius: 6px;
         border: 1px solid #ccc;
       }
       #message-form button {
-        background: #4c81ff;
+        background: #6d83e0;
         border: none;
         color: #fff;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 6px;
         padding: 8px 14px;
         transition: background 0.2s ease;
       }
       #message-form button:hover {
-        background: #3b5ecc;
+        background: #5568b5;
       }
 
-      .messages-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      #download-all-btn,
+      #clear-all-messages-btn,
+      #clear-all-comments-btn {
+        background: #ccc;
+        border: none;
+        color: #333;
+        border-radius: 6px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        margin-left: 6px;
+      }
+      #download-all-btn:hover,
+      #clear-all-messages-btn:hover,
+      #clear-all-comments-btn:hover {
+        background: #bbb;
       }
 
       /* Bubbles styling for messages */
@@ -222,11 +250,14 @@
         list-style: none;
         margin: 0;
         padding: 0;
+        flex: 1; /* let it grow */
+        overflow-y: auto;
       }
       .message-item {
         margin-bottom: 8px;
         display: flex;
         align-items: flex-end;
+        justify-content: flex-start;
       }
       .message-content {
         max-width: 70%;
@@ -236,29 +267,37 @@
         font-size: 14px;
         line-height: 1.4;
         background: #e1eafc;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       .message-user {
-        font-weight: bold;
+        font-weight: 600;
         margin-bottom: 4px;
+        color: #333;
       }
       .message-options {
         margin-left: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
-      .message-options button {
-        background: #999;
+      .msg-btn {
+        background: #bbb;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         color: #fff;
         font-size: 12px;
         padding: 4px 6px;
         cursor: pointer;
-        margin-bottom: 4px;
+        transition: background 0.2s ease;
       }
-      .message-options button:hover {
-        background: #777;
+      .msg-btn:hover {
+        background: #999;
       }
 
       /* Typing indicator bubble */
+      #typing-indicators {
+        margin-bottom: 8px;
+      }
       .typing-bubble {
         display: inline-block;
         padding: 6px 10px;
@@ -266,6 +305,7 @@
         border-radius: 16px;
         margin-bottom: 8px;
         font-size: 14px;
+        margin-right: 6px;
       }
 
       /* Comments List in sidebar */
@@ -279,6 +319,7 @@
         list-style: none;
         margin: 0;
         padding: 0;
+        flex: 0; /* comments won't flex */
       }
       #comments li {
         padding: 10px;
@@ -288,32 +329,37 @@
         border-radius: 6px;
         position: relative;
         font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       #comments li .comment-text {
         margin-right: 60px;
       }
       .comment-author {
-        font-weight: bold;
+        font-weight: 600;
         display: block;
         margin-bottom: 4px;
       }
-      /* Edit / Delete comment buttons */
-      #comments li .edit-comment,
-      #comments li .delete-comment {
+      .edit-comment,
+      .delete-comment {
         position: absolute;
         top: 10px;
-        background: #666;
+        background: #888;
         color: #fff;
         border: none;
         cursor: pointer;
         padding: 4px 6px;
         font-size: 12px;
         border-radius: 4px;
+        transition: background 0.2s ease;
       }
-      #comments li .edit-comment {
+      .edit-comment:hover,
+      .delete-comment:hover {
+        background: #555;
+      }
+      .edit-comment {
         right: 40px;
       }
-      #comments li .delete-comment {
+      .delete-comment {
         right: 10px;
         background: #e33f3f;
       }
@@ -322,14 +368,41 @@
       .realtime-highlight {
         background: #fcf3a2;
       }
+
+      /* Canvas Drawing Section */
+      .canvas-container {
+        margin-top: 16px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 8px;
+        display: none; /* shown if toggled */
+      }
+      #draw-canvas {
+        border: 1px solid #999;
+        width: 100%;
+        height: 300px;
+        border-radius: 4px;
+        background: #ffffff;
+      }
+      #toggle-canvas-btn {
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        background: #fafafa;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: background 0.2s;
+        font-size: 0.9rem;
+      }
+      #toggle-canvas-btn:hover {
+        background: #ebebeb;
+      }
     </style>
   </head>
 
   <body>
     <!-- === HEADER === -->
-    <header>
-      <h1>Real-Time Collaboration App</h1>
-    </header>
+    <header>Real-Time Collaboration App (Apple-Like)</header>
 
     <!-- === USE CASES TOGGLE BUTTON AND CONTAINER === -->
     <button id="use-cases-button" title="Show/Hide Use Cases">
@@ -344,7 +417,7 @@
         </li>
         <li>
           <strong>Speaking Practice with Instant Corrections:</strong>
-          The instructor types corrections in real-time as students speak.
+          The instructor types corrections as students speak.
         </li>
         <li>
           <strong>Pronunciation Drills:</strong>
@@ -359,15 +432,17 @@
       <div class="editor">
         <!-- Toolbar -->
         <div id="toolbar" class="toolbar">
+          <!-- Existing Buttons -->
           <button data-action="bold" title="Bold (Ctrl + B)">B</button>
           <button data-action="italic" title="Italic (Ctrl + I)">I</button>
           <button data-action="underline" title="Underline (Ctrl + U)">
             U
           </button>
-          <button data-action="backColor" title="Highlight selected text">
+          <!-- Fix highlight: We'll use our custom function for highlight -->
+          <button data-action="highlight" title="Highlight Selection">
             HL
           </button>
-          <!-- 3+ New toolbar actions -->
+          <!-- Additional robust actions -->
           <button data-action="strikeThrough" title="Strike Through">S</button>
           <button data-action="justifyLeft" title="Align Left">&#8676;</button>
           <button data-action="justifyCenter" title="Align Center">
@@ -376,11 +451,32 @@
           <button data-action="justifyRight" title="Align Right">
             &#8678;
           </button>
+          <button data-action="undo" title="Undo (Ctrl + Z)">Undo</button>
+          <button data-action="redo" title="Redo (Ctrl + Y)">Redo</button>
+          <!-- Font size and family (example) -->
+          <select data-action="fontSize" title="Font Size">
+            <option value="">Size</option>
+            <option value="1">x-small</option>
+            <option value="3">normal</option>
+            <option value="5">large</option>
+            <option value="7">huge</option>
+          </select>
+          <select data-action="fontName" title="Font Family">
+            <option value="">Font</option>
+            <option value="Arial">Arial</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Times New Roman">Times</option>
+            <option value="Courier New">Courier</option>
+          </select>
+
+          <!-- Toggle Canvas -->
+          <button id="toggle-canvas-btn" title="Toggle Drawing Canvas">
+            Canvas
+          </button>
         </div>
 
         <!-- Content Area (editable) -->
         <div id="content-area" contenteditable="true" class="content-area">
-          <!-- Actual user text will appear here. -->
           <!-- We'll place a .placeholder if empty -->
         </div>
 
@@ -388,15 +484,25 @@
         <button id="add-comment-btn" title="Add a comment to selected text">
           Add Comment
         </button>
+
+        <!-- Canvas Container for drawing -->
+        <div class="canvas-container" id="canvas-container">
+          <canvas id="draw-canvas"></canvas>
+        </div>
       </div>
 
       <!-- Sidebar: Messages + Comments -->
       <div class="sidebar">
         <div class="messages-header">
           <h2>Messages</h2>
-          <button id="download-all-btn" title="Download all messages">
-            Download All
-          </button>
+          <div>
+            <button id="download-all-btn" title="Download all messages">
+              DL All
+            </button>
+            <button id="clear-all-messages-btn" title="Clear All Messages">
+              Clear All
+            </button>
+          </div>
         </div>
 
         <!-- Message Form to send real-time messages -->
@@ -416,12 +522,17 @@
         <!-- UL for messages -->
         <ul id="messages"></ul>
 
-        <h3 class="comments-title">Comments</h3>
+        <h3 class="comments-title">
+          Comments
+          <button id="clear-all-comments-btn" title="Clear All Comments">
+            Clear All
+          </button>
+        </h3>
         <ul id="comments"></ul>
       </div>
     </div>
 
-    <!-- === SCRIPTS (inline for example) === -->
+    <!-- === SCRIPTS === -->
     <script type="module">
       /****************************************
        * 1) FIREBASE SETUP
@@ -439,7 +550,7 @@
         get,
       } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
-      // Replace these with your own config
+      // Replace with your own config
       // Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyDNwApaLmfjk1cZBA0kZZMkYEnr39VZUyg",
@@ -451,7 +562,6 @@
         appId: "1:955627884879:web:4f5159d814956ed1ce753a",
         measurementId: "G-9311P887T1",
       };
-
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
 
@@ -481,22 +591,44 @@
       const messageInput = document.getElementById("message-input");
       const messagesList = document.getElementById("messages");
       const downloadAllBtn = document.getElementById("download-all-btn");
+      const clearAllMsgsBtn = document.getElementById("clear-all-messages-btn");
 
       // Typing
       const typingIndicators = document.getElementById("typing-indicators");
 
       // Comments
       const commentsList = document.getElementById("comments");
+      const clearAllCommentsBtn = document.getElementById(
+        "clear-all-comments-btn"
+      );
+
+      // Canvas
+      const toggleCanvasBtn = document.getElementById("toggle-canvas-btn");
+      const canvasContainer = document.getElementById("canvas-container");
+      const drawCanvas = document.getElementById("draw-canvas");
 
       /****************************************
-       * 4) USE CASES TOGGLE (WITH TRANSITION)
+       * 4) ADD SOUNDS
+       ****************************************/
+      const sendSound = new Audio(
+        "https://actions.google.com/sounds/v1/cartoon/slide_whistle_tooting.ogg"
+      );
+      const typingSound = new Audio(
+        "https://actions.google.com/sounds/v1/foley/power_up_03.ogg"
+      );
+      // Lower volumes a bit
+      sendSound.volume = 0.3;
+      typingSound.volume = 0.2;
+
+      /****************************************
+       * 5) USE CASES TOGGLE (WITH TRANSITION)
        ****************************************/
       useCasesButton.addEventListener("click", () => {
         useCasesContainer.classList.toggle("show");
       });
 
       /****************************************
-       * 5) EDITOR PLACEHOLDER HANDLING
+       * 6) EDITOR PLACEHOLDER HANDLING
        ****************************************/
       function updatePlaceholder() {
         if (!contentArea.innerText.trim()) {
@@ -511,13 +643,12 @@
           if (ph) ph.remove();
         }
       }
-      // Call initially
       updatePlaceholder();
 
       /****************************************
-       * 6) REAL-TIME EDITOR SYNC & CURSOR MGMT
+       * 7) REAL-TIME EDITOR SYNC & CURSOR MGMT
        ****************************************/
-      let localChange = false; // prevent overwriting local user changes
+      let localChange = false; // prevents overwriting local user changes
 
       contentArea.addEventListener("input", () => {
         localChange = true;
@@ -531,8 +662,8 @@
           lastEditBy: nickname,
         });
 
-        // Quick highlight flash
-        contentArea.style.backgroundColor = "#f0f8ff";
+        // quick highlight flash
+        contentArea.style.backgroundColor = "#eef2ff";
         setTimeout(() => {
           contentArea.style.backgroundColor = "white";
         }, 400);
@@ -548,7 +679,6 @@
           if (data.content !== contentArea.innerHTML) {
             contentArea.innerHTML = data.content;
           }
-          // restore cursor if data.cursorPosition
           const range = document.createRange();
           const selection = window.getSelection();
           let pos = data.cursorPosition || 0;
@@ -566,7 +696,43 @@
       });
 
       /****************************************
-       * 7) REAL-TIME HIGHLIGHTING OF SELECTION
+       * 8) DOUBLE-CLICK TO HIGHLIGHT A WORD
+       ****************************************/
+      contentArea.addEventListener("dblclick", (e) => {
+        // On double click, get the selection and highlight that word
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        // We'll wrap the word in a <span> with class="double-click-highlight"
+        // But we must ensure we only highlight a single word
+        if (!range.collapsed) {
+          // might be multiple words, but let's keep it simple
+          // We'll highlight whatever is selected
+          const span = document.createElement("span");
+          span.className = "double-click-highlight";
+          range.surroundContents(span);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      });
+
+      /****************************************
+       * 9) CONTEXT MENU FOR ADD COMMENT
+       ****************************************/
+      contentArea.addEventListener("contextmenu", (e) => {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed) {
+          e.preventDefault(); // prevent default context
+          // Show a simple confirm as an example (or create a custom context menu)
+          const wantComment = confirm("Add comment on selected text?");
+          if (wantComment) {
+            handleAddComment();
+          }
+        }
+      });
+
+      /****************************************
+       * 10) REAL-TIME HIGHLIGHTING OF SELECTION
        ****************************************/
       let lastSelectionRange = null;
 
@@ -589,6 +755,26 @@
         });
       }
 
+      function handleAddComment() {
+        if (!lastSelectionRange) return;
+        const selectedText = lastSelectionRange.toString();
+        if (!selectedText.trim()) return;
+
+        const userComment = prompt("Add a comment for: " + selectedText);
+        if (userComment) {
+          const startIndex = contentArea.innerText.indexOf(selectedText);
+          push(ref(db, "comments"), {
+            text: selectedText,
+            comment: userComment,
+            startIndex,
+            length: selectedText.length,
+            timestamp: new Date().toISOString(),
+            user: nickname,
+          });
+        }
+        addCommentBtn.style.display = "none";
+      }
+
       contentArea.addEventListener("mouseup", (e) => {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
@@ -601,7 +787,6 @@
             addCommentBtn.style.top = e.pageY - 40 + "px";
             addCommentBtn.style.left = e.pageX + "px";
           } else {
-            // no selection
             set(ref(db, "liveSelection"), null);
             lastSelectionRange = null;
             addCommentBtn.style.display = "none";
@@ -609,8 +794,11 @@
         }
       });
 
+      addCommentBtn.addEventListener("click", () => {
+        handleAddComment();
+      });
+
       document.addEventListener("click", (e) => {
-        // if the click is not inside the content-area or the button
         if (!contentArea.contains(e.target) && e.target !== addCommentBtn) {
           addCommentBtn.style.display = "none";
         }
@@ -659,9 +847,8 @@
       }
 
       /****************************************
-       * 8) MESSAGES: SEND, DISPLAY, DOWNLOAD ALL
+       * 11) MESSAGES: SEND, DISPLAY, CLEAR ALL
        ****************************************/
-      // Typing state management for messages
       let typingTimeout = null;
       const TYPING_TIMER_LENGTH = 2000; // 2s
 
@@ -670,7 +857,7 @@
         const text = messageInput.value.trim();
         if (!text) return;
 
-        // Push to Firebase
+        // push to Firebase
         const newMessageRef = push(ref(db, "messages"));
         set(newMessageRef, {
           text,
@@ -678,15 +865,22 @@
           timestamp: Date.now(),
         });
 
+        // play a sound
+        sendSound.currentTime = 0;
+        sendSound.play();
+
         messageInput.value = "";
-        // Clear typing state
+        // clear typing state
         set(ref(db, `typing/${nickname}`), null);
       });
 
       messageInput.addEventListener("input", () => {
         // user is typing
+        // play typing sound
+        typingSound.currentTime = 0;
+        typingSound.play();
+
         set(ref(db, `typing/${nickname}`), { user: nickname });
-        // clear any previous timer
         if (typingTimeout) clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
           set(ref(db, `typing/${nickname}`), null);
@@ -698,56 +892,53 @@
         const messages = snapshot.val();
         messagesList.innerHTML = "";
         if (messages) {
-          // sort by timestamp if you'd like, or just rely on push order
-          // But to keep it simple, we'll just use object keys in order
           Object.keys(messages).forEach((key) => {
             const m = messages[key];
             const li = document.createElement("li");
             li.classList.add("message-item");
 
-            // Bubble
             const bubble = document.createElement("div");
             bubble.classList.add("message-content");
-
-            // Nickname + text
             bubble.innerHTML = `
               <div class="message-user">${m.user}</div>
               <div>${m.text}</div>
             `;
-            li.appendChild(bubble);
 
-            // Buttons (optional)
             const opts = document.createElement("div");
             opts.classList.add("message-options");
 
-            // Edit button (if you want message editing)
+            // Edit button
             const editBtn = document.createElement("button");
+            editBtn.className = "msg-btn";
             editBtn.innerText = "Edit";
             editBtn.title = "Edit this message";
             editBtn.addEventListener("click", () => editMessage(key, m.text));
-            opts.appendChild(editBtn);
 
             // Delete button
             const delBtn = document.createElement("button");
+            delBtn.className = "msg-btn";
             delBtn.innerText = "Del";
             delBtn.title = "Delete this message";
             delBtn.addEventListener("click", () => deleteMessage(key));
-            opts.appendChild(delBtn);
 
             // Download single message
             const dlBtn = document.createElement("button");
+            dlBtn.className = "msg-btn";
             dlBtn.innerText = "DL";
             dlBtn.title = "Download this message";
             dlBtn.addEventListener("click", () => downloadMessage(m.text));
+
+            opts.appendChild(editBtn);
+            opts.appendChild(delBtn);
             opts.appendChild(dlBtn);
 
+            li.appendChild(bubble);
             li.appendChild(opts);
             messagesList.appendChild(li);
           });
         }
       });
 
-      // Editing a message
       function editMessage(key, oldText) {
         const newText = prompt("Edit message:", oldText);
         if (newText !== null && newText.trim() !== "") {
@@ -756,13 +947,9 @@
           });
         }
       }
-
-      // Deleting a message
       function deleteMessage(key) {
         remove(ref(db, `messages/${key}`));
       }
-
-      // Download single message
       window.downloadMessage = (text) => {
         const blob = new Blob([text], { type: "text/plain" });
         const a = document.createElement("a");
@@ -781,7 +968,6 @@
         Object.values(messages).forEach((m) => {
           content += `[${m.user}] ${m.text}\n`;
         });
-
         const blob = new Blob([content], { type: "text/plain" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -789,8 +975,16 @@
         a.click();
       });
 
+      // Clear all messages
+      clearAllMsgsBtn.addEventListener("click", () => {
+        const sure = confirm("Are you sure you want to clear ALL messages?");
+        if (sure) {
+          remove(ref(db, "messages"));
+        }
+      });
+
       /****************************************
-       * 9) TYPING INDICATORS
+       * 12) TYPING INDICATORS
        ****************************************/
       onValue(ref(db, "typing"), (snapshot) => {
         const typingState = snapshot.val() || {};
@@ -808,28 +1002,8 @@
       });
 
       /****************************************
-       * 10) COMMENTS (ADD, EDIT, DELETE)
+       * 13) COMMENTS (ADD, EDIT, DELETE, CLEAR ALL)
        ****************************************/
-      addCommentBtn.addEventListener("click", () => {
-        if (!lastSelectionRange) return;
-        const selectedText = lastSelectionRange.toString();
-        if (!selectedText.trim()) return;
-
-        const userComment = prompt("Add a comment for: " + selectedText);
-        if (userComment) {
-          const startIndex = contentArea.innerText.indexOf(selectedText);
-          push(ref(db, "comments"), {
-            text: selectedText,
-            comment: userComment,
-            startIndex,
-            length: selectedText.length,
-            timestamp: new Date().toISOString(),
-            user: nickname,
-          });
-        }
-        addCommentBtn.style.display = "none";
-      });
-
       onValue(ref(db, "comments"), (snapshot) => {
         const comments = snapshot.val();
         commentsList.innerHTML = "";
@@ -855,7 +1029,13 @@
         }
       });
 
-      // Edit a comment
+      clearAllCommentsBtn.addEventListener("click", () => {
+        const sure = confirm("Are you sure you want to clear ALL comments?");
+        if (sure) {
+          remove(ref(db, "comments"));
+        }
+      });
+
       window.editComment = (key) => {
         get(ref(db, `comments/${key}`)).then((snapshot) => {
           if (snapshot.exists()) {
@@ -872,30 +1052,58 @@
           }
         });
       };
-
-      // Delete a comment
       window.deleteComment = (key) => {
         remove(ref(db, `comments/${key}`));
       };
 
       /****************************************
-       * 11) ENHANCED TOOLBAR (EXEC COMMAND)
+       * 14) TOOLBAR (ROBUST ACTIONS)
        ****************************************/
       toolbar.addEventListener("click", (event) => {
-        const action = event.target.dataset.action;
-        if (action) {
+        const { action } = event.target.dataset;
+        if (!action) return;
+
+        if (action === "highlight") {
+          // Our custom highlight logic
+          highlightSelectedText();
+        } else {
+          // For everything else, just execCommand
           document.execCommand(action, false, null);
         }
       });
 
+      // For <select> changes
+      toolbar.addEventListener("change", (event) => {
+        const { action } = event.target.dataset;
+        if (!action) return;
+
+        const value = event.target.value;
+        if (action === "fontSize") {
+          document.execCommand("fontSize", false, value);
+        } else if (action === "fontName") {
+          document.execCommand("fontName", false, value);
+        }
+      });
+
+      // Fix highlight button with a custom color
+      function highlightSelectedText() {
+        // We'll highlight with a mild yellow
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        // execCommand is inconsistent for 'backColor' in some browsers
+        // We'll try 'hiliteColor' first
+        if (document.queryCommandSupported("hiliteColor")) {
+          document.execCommand("hiliteColor", false, "#fff59d");
+        } else {
+          document.execCommand("backColor", false, "#fff59d");
+        }
+      }
+
       /****************************************
-       * 12) LIVE CURSOR TRACKING (MOUSEMOVE)
+       * 15) LIVE CURSOR TRACKING (ALWAYS SHOW)
        ****************************************/
-      // We'll store { x, y, color } for each user in "cursors" node
-      // Create or pick a random color if not set
       let myCursorColor = localStorage.getItem("cursorColor");
       if (!myCursorColor) {
-        // pick from a few pastel or bright shades
         const colors = [
           "#ff7777",
           "#77ff77",
@@ -908,22 +1116,29 @@
         localStorage.setItem("cursorColor", myCursorColor);
       }
 
-      // Track local user mouse
+      // Track local user mouse (even if not moving)
       contentArea.addEventListener("mousemove", (e) => {
+        updateCursorPosition(e);
+      });
+      contentArea.addEventListener("mouseleave", (e) => {
+        // We won't remove it so user always sees their cursor
+        // but we could hide it if we wanted.
+        updateCursorPosition(e);
+      });
+
+      function updateCursorPosition(e) {
         const rect = contentArea.getBoundingClientRect();
-        // get x,y relative to contentArea
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         set(ref(db, `cursors/${nickname}`), {
           x,
           y,
           color: myCursorColor,
           name: nickname,
         });
-      });
+      }
 
-      // Clear cursor from DB if user leaves the page
+      // Clear cursor if user leaves page
       window.addEventListener("beforeunload", () => {
         remove(ref(db, `cursors/${nickname}`));
       });
@@ -934,20 +1149,72 @@
         // Remove all existing .user-cursor elements
         document.querySelectorAll(".user-cursor").forEach((el) => el.remove());
 
-        // For each user except me, place a dot
+        // For every user (including me)
         Object.keys(cursorsData).forEach((user) => {
-          if (user !== nickname) {
-            const c = cursorsData[user];
-            const dot = document.createElement("div");
-            dot.classList.add("user-cursor");
-            dot.style.backgroundColor = c.color;
-            dot.style.left = c.x + "px";
-            dot.style.top = c.y + "px";
-            dot.setAttribute("data-name", c.name);
-            contentArea.appendChild(dot);
-          }
+          const c = cursorsData[user];
+          const dot = document.createElement("div");
+          dot.classList.add("user-cursor");
+          dot.style.backgroundColor = c.color;
+          dot.style.left = c.x + "px";
+          dot.style.top = c.y + "px";
+          dot.setAttribute("data-name", c.name);
+          contentArea.appendChild(dot);
         });
       });
+
+      /****************************************
+       * 16) CANVAS DRAWING
+       ****************************************/
+      let drawing = false;
+      let ctx = null;
+
+      // Toggle canvas
+      toggleCanvasBtn.addEventListener("click", () => {
+        canvasContainer.style.display =
+          canvasContainer.style.display === "none" ? "block" : "none";
+      });
+
+      // Setup canvas
+      function setupCanvas() {
+        // Retinal scaling
+        const dpr = window.devicePixelRatio || 1;
+        const rect = drawCanvas.getBoundingClientRect();
+        drawCanvas.width = rect.width * dpr;
+        drawCanvas.height = rect.height * dpr;
+        ctx = drawCanvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#1c1c1c";
+      }
+
+      setupCanvas();
+      window.addEventListener("resize", setupCanvas);
+
+      drawCanvas.addEventListener("mousedown", (e) => {
+        drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(getX(e), getY(e));
+      });
+      drawCanvas.addEventListener("mousemove", (e) => {
+        if (!drawing) return;
+        ctx.lineTo(getX(e), getY(e));
+        ctx.stroke();
+      });
+      drawCanvas.addEventListener("mouseup", () => {
+        drawing = false;
+      });
+      drawCanvas.addEventListener("mouseleave", () => {
+        drawing = false;
+      });
+
+      function getX(e) {
+        return e.offsetX;
+      }
+      function getY(e) {
+        return e.offsetY;
+      }
     </script>
   </body>
 </html>
