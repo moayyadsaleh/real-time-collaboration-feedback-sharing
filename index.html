@@ -103,6 +103,15 @@
       .toolbar button:hover {
         background: #ebebeb;
       }
+      /* The color picker in the toolbar */
+      #color-picker {
+        width: 40px;
+        height: 34px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+      }
+
       .content-area {
         flex: 1;
         border: 1px solid #ccc;
@@ -368,35 +377,6 @@
       .realtime-highlight {
         background: #fcf3a2;
       }
-
-      /* Canvas Drawing Section */
-      .canvas-container {
-        margin-top: 16px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        padding: 8px;
-        display: none; /* shown if toggled */
-      }
-      #draw-canvas {
-        border: 1px solid #999;
-        width: 100%;
-        height: 300px;
-        border-radius: 4px;
-        background: #ffffff;
-      }
-      #toggle-canvas-btn {
-        padding: 6px 12px;
-        border: 1px solid #ccc;
-        background: #fafafa;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: background 0.2s;
-        font-size: 0.9rem;
-      }
-      #toggle-canvas-btn:hover {
-        background: #ebebeb;
-      }
     </style>
   </head>
 
@@ -438,7 +418,7 @@
           <button data-action="underline" title="Underline (Ctrl + U)">
             U
           </button>
-          <!-- Fix highlight: We'll use our custom function for highlight -->
+          <!-- Our custom highlight button -->
           <button data-action="highlight" title="Highlight Selection">
             HL
           </button>
@@ -469,9 +449,10 @@
             <option value="Courier New">Courier</option>
           </select>
 
-          <!-- Toggle Canvas -->
-          <button id="toggle-canvas-btn" title="Toggle Drawing Canvas">
-            Canvas
+          <!-- Color picker + Pen button -->
+          <input type="color" id="color-picker" title="Pick a color" />
+          <button data-action="pen" title="Apply color to selected text">
+            Pen
           </button>
         </div>
 
@@ -484,11 +465,6 @@
         <button id="add-comment-btn" title="Add a comment to selected text">
           Add Comment
         </button>
-
-        <!-- Canvas Container for drawing -->
-        <div class="canvas-container" id="canvas-container">
-          <canvas id="draw-canvas"></canvas>
-        </div>
       </div>
 
       <!-- Sidebar: Messages + Comments -->
@@ -550,8 +526,6 @@
         get,
       } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
-      // Replace with your own config
-      // Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyDNwApaLmfjk1cZBA0kZZMkYEnr39VZUyg",
         authDomain: "realtimecollabapp.firebaseapp.com",
@@ -562,6 +536,7 @@
         appId: "1:955627884879:web:4f5159d814956ed1ce753a",
         measurementId: "G-9311P887T1",
       };
+
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
 
@@ -583,6 +558,7 @@
       const contentArea = document.getElementById("content-area");
       const addCommentBtn = document.getElementById("add-comment-btn");
       const toolbar = document.getElementById("toolbar");
+      const colorPicker = document.getElementById("color-picker");
       const useCasesButton = document.getElementById("use-cases-button");
       const useCasesContainer = document.getElementById("use-cases-container");
 
@@ -602,11 +578,6 @@
         "clear-all-comments-btn"
       );
 
-      // Canvas
-      const toggleCanvasBtn = document.getElementById("toggle-canvas-btn");
-      const canvasContainer = document.getElementById("canvas-container");
-      const drawCanvas = document.getElementById("draw-canvas");
-
       /****************************************
        * 4) ADD SOUNDS
        ****************************************/
@@ -616,7 +587,7 @@
       const typingSound = new Audio(
         "https://actions.google.com/sounds/v1/foley/power_up_03.ogg"
       );
-      // Lower volumes a bit
+      // Lower volumes
       sendSound.volume = 0.3;
       typingSound.volume = 0.2;
 
@@ -699,15 +670,10 @@
        * 8) DOUBLE-CLICK TO HIGHLIGHT A WORD
        ****************************************/
       contentArea.addEventListener("dblclick", (e) => {
-        // On double click, get the selection and highlight that word
         const sel = window.getSelection();
         if (!sel.rangeCount) return;
         const range = sel.getRangeAt(0);
-        // We'll wrap the word in a <span> with class="double-click-highlight"
-        // But we must ensure we only highlight a single word
         if (!range.collapsed) {
-          // might be multiple words, but let's keep it simple
-          // We'll highlight whatever is selected
           const span = document.createElement("span");
           span.className = "double-click-highlight";
           range.surroundContents(span);
@@ -723,7 +689,6 @@
         const sel = window.getSelection();
         if (sel && !sel.isCollapsed) {
           e.preventDefault(); // prevent default context
-          // Show a simple confirm as an example (or create a custom context menu)
           const wantComment = confirm("Add comment on selected text?");
           if (wantComment) {
             handleAddComment();
@@ -857,7 +822,6 @@
         const text = messageInput.value.trim();
         if (!text) return;
 
-        // push to Firebase
         const newMessageRef = push(ref(db, "messages"));
         set(newMessageRef, {
           text,
@@ -876,7 +840,6 @@
 
       messageInput.addEventListener("input", () => {
         // user is typing
-        // play typing sound
         typingSound.currentTime = 0;
         typingSound.play();
 
@@ -887,7 +850,6 @@
         }, TYPING_TIMER_LENGTH);
       });
 
-      // Listen for messages
       onValue(ref(db, "messages"), (snapshot) => {
         const messages = snapshot.val();
         messagesList.innerHTML = "";
@@ -907,21 +869,18 @@
             const opts = document.createElement("div");
             opts.classList.add("message-options");
 
-            // Edit button
             const editBtn = document.createElement("button");
             editBtn.className = "msg-btn";
             editBtn.innerText = "Edit";
             editBtn.title = "Edit this message";
             editBtn.addEventListener("click", () => editMessage(key, m.text));
 
-            // Delete button
             const delBtn = document.createElement("button");
             delBtn.className = "msg-btn";
             delBtn.innerText = "Del";
             delBtn.title = "Delete this message";
             delBtn.addEventListener("click", () => deleteMessage(key));
 
-            // Download single message
             const dlBtn = document.createElement("button");
             dlBtn.className = "msg-btn";
             dlBtn.innerText = "DL";
@@ -958,7 +917,6 @@
         a.click();
       };
 
-      // Download all messages
       downloadAllBtn.addEventListener("click", async () => {
         const snap = await get(ref(db, "messages"));
         if (!snap.exists()) return;
@@ -975,7 +933,6 @@
         a.click();
       });
 
-      // Clear all messages
       clearAllMsgsBtn.addEventListener("click", () => {
         const sure = confirm("Are you sure you want to clear ALL messages?");
         if (sure) {
@@ -992,7 +949,6 @@
 
         Object.keys(typingState).forEach((k) => {
           if (k !== nickname) {
-            // show that user is typing
             const bubble = document.createElement("div");
             bubble.classList.add("typing-bubble");
             bubble.innerText = `${typingState[k].user} is typing...`;
@@ -1057,19 +1013,26 @@
       };
 
       /****************************************
-       * 14) TOOLBAR (ROBUST ACTIONS)
+       * 14) TOOLBAR (ROBUST ACTIONS + PEN)
        ****************************************/
       toolbar.addEventListener("click", (event) => {
         const { action } = event.target.dataset;
         if (!action) return;
 
+        // Our custom highlight
         if (action === "highlight") {
-          // Our custom highlight logic
           highlightSelectedText();
-        } else {
-          // For everything else, just execCommand
-          document.execCommand(action, false, null);
+          return;
         }
+        // Pen: apply chosen color to selected text
+        if (action === "pen") {
+          const pickedColor = colorPicker.value || "#000000";
+          document.execCommand("foreColor", false, pickedColor);
+          return;
+        }
+
+        // For everything else, just execCommand
+        document.execCommand(action, false, null);
       });
 
       // For <select> changes
@@ -1087,11 +1050,8 @@
 
       // Fix highlight button with a custom color
       function highlightSelectedText() {
-        // We'll highlight with a mild yellow
         const selection = window.getSelection();
         if (!selection.rangeCount) return;
-        // execCommand is inconsistent for 'backColor' in some browsers
-        // We'll try 'hiliteColor' first
         if (document.queryCommandSupported("hiliteColor")) {
           document.execCommand("hiliteColor", false, "#fff59d");
         } else {
@@ -1116,16 +1076,6 @@
         localStorage.setItem("cursorColor", myCursorColor);
       }
 
-      // Track local user mouse (even if not moving)
-      contentArea.addEventListener("mousemove", (e) => {
-        updateCursorPosition(e);
-      });
-      contentArea.addEventListener("mouseleave", (e) => {
-        // We won't remove it so user always sees their cursor
-        // but we could hide it if we wanted.
-        updateCursorPosition(e);
-      });
-
       function updateCursorPosition(e) {
         const rect = contentArea.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -1138,15 +1088,20 @@
         });
       }
 
-      // Clear cursor if user leaves page
+      contentArea.addEventListener("mousemove", (e) => {
+        updateCursorPosition(e);
+      });
+      contentArea.addEventListener("mouseleave", (e) => {
+        updateCursorPosition(e);
+        // We keep it so it's always shown, not removing the cursor
+      });
+
       window.addEventListener("beforeunload", () => {
         remove(ref(db, `cursors/${nickname}`));
       });
 
-      // Listen for cursors
       onValue(ref(db, "cursors"), (snapshot) => {
         const cursorsData = snapshot.val() || {};
-        // Remove all existing .user-cursor elements
         document.querySelectorAll(".user-cursor").forEach((el) => el.remove());
 
         // For every user (including me)
@@ -1161,60 +1116,6 @@
           contentArea.appendChild(dot);
         });
       });
-
-      /****************************************
-       * 16) CANVAS DRAWING
-       ****************************************/
-      let drawing = false;
-      let ctx = null;
-
-      // Toggle canvas
-      toggleCanvasBtn.addEventListener("click", () => {
-        canvasContainer.style.display =
-          canvasContainer.style.display === "none" ? "block" : "none";
-      });
-
-      // Setup canvas
-      function setupCanvas() {
-        // Retinal scaling
-        const dpr = window.devicePixelRatio || 1;
-        const rect = drawCanvas.getBoundingClientRect();
-        drawCanvas.width = rect.width * dpr;
-        drawCanvas.height = rect.height * dpr;
-        ctx = drawCanvas.getContext("2d");
-        ctx.scale(dpr, dpr);
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#1c1c1c";
-      }
-
-      setupCanvas();
-      window.addEventListener("resize", setupCanvas);
-
-      drawCanvas.addEventListener("mousedown", (e) => {
-        drawing = true;
-        ctx.beginPath();
-        ctx.moveTo(getX(e), getY(e));
-      });
-      drawCanvas.addEventListener("mousemove", (e) => {
-        if (!drawing) return;
-        ctx.lineTo(getX(e), getY(e));
-        ctx.stroke();
-      });
-      drawCanvas.addEventListener("mouseup", () => {
-        drawing = false;
-      });
-      drawCanvas.addEventListener("mouseleave", () => {
-        drawing = false;
-      });
-
-      function getX(e) {
-        return e.offsetX;
-      }
-      function getY(e) {
-        return e.offsetY;
-      }
     </script>
   </body>
 </html>
