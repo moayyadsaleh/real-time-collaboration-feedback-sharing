@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real-Time Collaboration App</title>
 
+    <!-- === FONT AWESOME (for toolbar icons) === -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      integrity="sha512-yQ03Kln...<omitted for brevity>..."
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
     <!-- === STYLES === -->
     <style>
       /* Basic reset & layout */
@@ -19,7 +28,7 @@
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background: #f5f5f7; /* Light grey Apple-like background */
+        background: #f4f4f6;
       }
 
       header {
@@ -33,13 +42,13 @@
 
       /* Use Cases Toggle */
       #use-cases-button {
-        padding: 12px 20px;
+        padding: 10px 18px;
         background: #6d83e0;
         color: white;
         border: none;
         cursor: pointer;
         margin: 12px;
-        font-size: 16px;
+        font-size: 15px;
         border-radius: 6px;
         transition: background 0.2s ease;
       }
@@ -57,6 +66,7 @@
         background: #ffffff;
         border: 1px solid #ccc;
         border-radius: 8px;
+        padding: 0 12px;
       }
       #use-cases-container.show {
         max-height: 300px;
@@ -88,11 +98,14 @@
       .toolbar {
         margin-bottom: 12px;
         display: flex;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
+        align-items: center;
       }
+
+      /* Common button style for toolbar */
       .toolbar button {
-        padding: 6px 12px;
+        padding: 6px 10px;
         border: 1px solid #ccc;
         background: #fafafa;
         cursor: pointer;
@@ -101,11 +114,11 @@
         font-size: 0.9rem;
       }
       .toolbar button:hover {
-        background: #ebebeb;
+        background: #e5e5e5;
       }
       /* The color picker in the toolbar */
       #color-picker {
-        width: 40px;
+        width: 34px;
         height: 34px;
         border: none;
         background: transparent;
@@ -135,7 +148,10 @@
         background: #fcf3a2; /* mild yellow */
       }
 
-      /* Mouse Cursor Dots for all users (including me) */
+      /* 
+        Mouse Cursor Dots for all users (including me).
+        We'll keep them, so "pen mode" doesn't remove them.
+      */
       .user-cursor {
         position: absolute;
         border-radius: 50%;
@@ -161,21 +177,24 @@
         white-space: nowrap;
       }
 
-      /* "Add Comment" button near selection */
-      #add-comment-btn {
-        display: none;
+      /* We'll remove the #add-comment-btn entirely from the DOM, so no style needed */
+
+      /* 
+        We do a "Pen Mode" overlay inside the .content-area 
+        We'll place a canvas with the same size as contentArea
+      */
+      #pen-overlay {
         position: absolute;
-        padding: 8px 10px;
-        background: #5568b5;
-        color: #fff;
-        cursor: pointer;
-        border: none;
-        border-radius: 6px;
-        font-size: 12px;
+        top: 0;
+        left: 0;
         z-index: 999;
+        display: none; /* shown if pen is toggled */
+        border-radius: 6px;
       }
-      #add-comment-btn:hover {
-        background: #404e86;
+      /* Pen Mode Cursor (override) */
+      .pen-active {
+        cursor: url("https://cdn-icons-png.flaticon.com/512/545/545674.png"),
+          crosshair;
       }
 
       /* Sidebar */
@@ -259,18 +278,18 @@
         list-style: none;
         margin: 0;
         padding: 0;
-        flex: 1; /* let it grow */
+        flex: 1;
         overflow-y: auto;
       }
       .message-item {
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         display: flex;
         align-items: flex-end;
         justify-content: flex-start;
       }
       .message-content {
         max-width: 70%;
-        padding: 8px 12px;
+        padding: 10px 14px;
         border-radius: 16px;
         position: relative;
         font-size: 14px;
@@ -278,10 +297,18 @@
         background: #e1eafc;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
+      .message-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #555;
+        margin-bottom: 4px;
+      }
       .message-user {
         font-weight: 600;
-        margin-bottom: 4px;
-        color: #333;
+      }
+      .message-time {
+        font-style: italic;
       }
       .message-options {
         margin-left: 8px;
@@ -290,7 +317,7 @@
         gap: 4px;
       }
       .msg-btn {
-        background: #bbb;
+        background: #999;
         border: none;
         border-radius: 6px;
         color: #fff;
@@ -300,7 +327,7 @@
         transition: background 0.2s ease;
       }
       .msg-btn:hover {
-        background: #999;
+        background: #777;
       }
 
       /* Typing indicator bubble */
@@ -328,12 +355,12 @@
         list-style: none;
         margin: 0;
         padding: 0;
-        flex: 0; /* comments won't flex */
+        flex: 0;
       }
       #comments li {
         padding: 10px;
         margin-bottom: 12px;
-        background: #ffffff;
+        background: #fff;
         border: 1px solid #ddd;
         border-radius: 6px;
         position: relative;
@@ -381,13 +408,11 @@
   </head>
 
   <body>
-    <!-- === HEADER === -->
-    <header>Real-Time Collaboration App (Apple-Like)</header>
+    <!-- HEADER -->
+    <header>Real-Time Collaboration App (Sleek + Modern)</header>
 
-    <!-- === USE CASES TOGGLE BUTTON AND CONTAINER === -->
-    <button id="use-cases-button" title="Show/Hide Use Cases">
-      Show/Hide Use Cases
-    </button>
+    <!-- USE CASES TOGGLE BUTTON AND CONTAINER -->
+    <button id="use-cases-button">Show/Hide Use Cases</button>
     <div id="use-cases-container">
       <h3>Use Cases:</h3>
       <ul>
@@ -406,34 +431,53 @@
       </ul>
     </div>
 
-    <!-- === MAIN CONTAINER: Editor + Sidebar === -->
+    <!-- MAIN CONTAINER -->
     <div class="app-container">
       <!-- Editor Pane -->
       <div class="editor">
         <!-- Toolbar -->
         <div id="toolbar" class="toolbar">
-          <!-- Existing Buttons -->
-          <button data-action="bold" title="Bold (Ctrl + B)">B</button>
-          <button data-action="italic" title="Italic (Ctrl + I)">I</button>
-          <button data-action="underline" title="Underline (Ctrl + U)">
-            U
+          <!-- Bold -->
+          <button data-action="bold" title="Bold">
+            <i class="fa-solid fa-bold"></i>
           </button>
-          <!-- Our custom highlight button -->
+          <!-- Italic -->
+          <button data-action="italic" title="Italic">
+            <i class="fa-solid fa-italic"></i>
+          </button>
+          <!-- Underline -->
+          <button data-action="underline" title="Underline">
+            <i class="fa-solid fa-underline"></i>
+          </button>
+          <!-- Highlight -->
           <button data-action="highlight" title="Highlight Selection">
-            HL
+            <i class="fa-solid fa-highlighter"></i>
           </button>
-          <!-- Additional robust actions -->
-          <button data-action="strikeThrough" title="Strike Through">S</button>
-          <button data-action="justifyLeft" title="Align Left">&#8676;</button>
+          <!-- StrikeThrough -->
+          <button data-action="strikeThrough" title="Strike Through">
+            <i class="fa-solid fa-strikethrough"></i>
+          </button>
+          <!-- Justify Left -->
+          <button data-action="justifyLeft" title="Align Left">
+            <i class="fa-solid fa-align-left"></i>
+          </button>
+          <!-- Justify Center -->
           <button data-action="justifyCenter" title="Align Center">
-            &#8677;
+            <i class="fa-solid fa-align-center"></i>
           </button>
+          <!-- Justify Right -->
           <button data-action="justifyRight" title="Align Right">
-            &#8678;
+            <i class="fa-solid fa-align-right"></i>
           </button>
-          <button data-action="undo" title="Undo (Ctrl + Z)">Undo</button>
-          <button data-action="redo" title="Redo (Ctrl + Y)">Redo</button>
-          <!-- Font size and family (example) -->
+          <!-- Undo -->
+          <button data-action="undo" title="Undo">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+          <!-- Redo -->
+          <button data-action="redo" title="Redo">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <!-- Font Size -->
           <select data-action="fontSize" title="Font Size">
             <option value="">Size</option>
             <option value="1">x-small</option>
@@ -441,6 +485,7 @@
             <option value="5">large</option>
             <option value="7">huge</option>
           </select>
+          <!-- Font Family -->
           <select data-action="fontName" title="Font Family">
             <option value="">Font</option>
             <option value="Arial">Arial</option>
@@ -448,26 +493,23 @@
             <option value="Times New Roman">Times</option>
             <option value="Courier New">Courier</option>
           </select>
-
-          <!-- Color picker + Pen button -->
+          <!-- Color picker -->
           <input type="color" id="color-picker" title="Pick a color" />
-          <button data-action="pen" title="Apply color to selected text">
-            Pen
+          <!-- Pen (to draw freehand in overlay) -->
+          <button data-action="pen" title="Toggle Pen Mode">
+            <i class="fa-solid fa-pen"></i>
           </button>
         </div>
 
         <!-- Content Area (editable) -->
         <div id="content-area" contenteditable="true" class="content-area">
           <!-- We'll place a .placeholder if empty -->
+          <!-- We'll also put the pen overlay canvas inside here -->
+          <canvas id="pen-overlay"></canvas>
         </div>
-
-        <!-- "Add Comment" button near the text selection -->
-        <button id="add-comment-btn" title="Add a comment to selected text">
-          Add Comment
-        </button>
       </div>
 
-      <!-- Sidebar: Messages + Comments -->
+      <!-- Sidebar -->
       <div class="sidebar">
         <div class="messages-header">
           <h2>Messages</h2>
@@ -481,7 +523,7 @@
           </div>
         </div>
 
-        <!-- Message Form to send real-time messages -->
+        <!-- Message Form -->
         <form id="message-form">
           <input
             type="text"
@@ -489,10 +531,12 @@
             placeholder="Type your message..."
             required
           />
-          <button type="submit" title="Send Message">Send</button>
+          <button type="submit" title="Send Message">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
         </form>
 
-        <!-- Real-time typing indicator container -->
+        <!-- Typing Indicators -->
         <div id="typing-indicators"></div>
 
         <!-- UL for messages -->
@@ -536,7 +580,6 @@
         appId: "1:955627884879:web:4f5159d814956ed1ce753a",
         measurementId: "G-9311P887T1",
       };
-
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
 
@@ -556,9 +599,9 @@
        * 3) DOM ELEMENTS
        ****************************************/
       const contentArea = document.getElementById("content-area");
-      const addCommentBtn = document.getElementById("add-comment-btn");
       const toolbar = document.getElementById("toolbar");
       const colorPicker = document.getElementById("color-picker");
+
       const useCasesButton = document.getElementById("use-cases-button");
       const useCasesContainer = document.getElementById("use-cases-container");
 
@@ -577,6 +620,9 @@
       const clearAllCommentsBtn = document.getElementById(
         "clear-all-comments-btn"
       );
+
+      // Pen Overlay
+      const penOverlay = document.getElementById("pen-overlay");
 
       /****************************************
        * 4) ADD SOUNDS
@@ -688,43 +734,16 @@
       contentArea.addEventListener("contextmenu", (e) => {
         const sel = window.getSelection();
         if (sel && !sel.isCollapsed) {
-          e.preventDefault(); // prevent default context
+          e.preventDefault();
           const wantComment = confirm("Add comment on selected text?");
           if (wantComment) {
-            handleAddComment();
+            handleAddComment(sel.toString());
           }
         }
       });
 
-      /****************************************
-       * 10) REAL-TIME HIGHLIGHTING OF SELECTION
-       ****************************************/
-      let lastSelectionRange = null;
-
-      function storeSelectionInDB(range) {
-        if (!range) return;
-        const startContainer = range.startContainer;
-        const endContainer = range.endContainer;
-        if (!startContainer || !endContainer) return;
-
-        const fullText = contentArea.innerText;
-        const selectionText = range.toString();
-        const startIndex = fullText.indexOf(selectionText);
-        if (startIndex < 0) return;
-
-        set(ref(db, "liveSelection"), {
-          text: selectionText,
-          startIndex,
-          length: selectionText.length,
-          user: nickname,
-        });
-      }
-
-      function handleAddComment() {
-        if (!lastSelectionRange) return;
-        const selectedText = lastSelectionRange.toString();
+      function handleAddComment(selectedText) {
         if (!selectedText.trim()) return;
-
         const userComment = prompt("Add a comment for: " + selectedText);
         if (userComment) {
           const startIndex = contentArea.innerText.indexOf(selectedText);
@@ -737,9 +756,15 @@
             user: nickname,
           });
         }
-        addCommentBtn.style.display = "none";
       }
 
+      /****************************************
+       * 10) REAL-TIME HIGHLIGHTING
+       ****************************************/
+      // We'll keep the same approach for live selection highlight.
+      // But we won't show any "Add Comment" button.
+
+      let lastSelectionRange = null;
       contentArea.addEventListener("mouseup", (e) => {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
@@ -747,27 +772,26 @@
           if (!range.collapsed) {
             lastSelectionRange = range;
             storeSelectionInDB(range);
-
-            addCommentBtn.style.display = "block";
-            addCommentBtn.style.top = e.pageY - 40 + "px";
-            addCommentBtn.style.left = e.pageX + "px";
           } else {
             set(ref(db, "liveSelection"), null);
             lastSelectionRange = null;
-            addCommentBtn.style.display = "none";
           }
         }
       });
 
-      addCommentBtn.addEventListener("click", () => {
-        handleAddComment();
-      });
+      function storeSelectionInDB(range) {
+        const fullText = contentArea.innerText;
+        const selectionText = range.toString();
+        const startIndex = fullText.indexOf(selectionText);
+        if (startIndex < 0) return;
 
-      document.addEventListener("click", (e) => {
-        if (!contentArea.contains(e.target) && e.target !== addCommentBtn) {
-          addCommentBtn.style.display = "none";
-        }
-      });
+        set(ref(db, "liveSelection"), {
+          text: selectionText,
+          startIndex,
+          length: selectionText.length,
+          user: nickname,
+        });
+      }
 
       onValue(ref(db, "liveSelection"), (snapshot) => {
         const selData = snapshot.val();
@@ -856,34 +880,48 @@
         if (messages) {
           Object.keys(messages).forEach((key) => {
             const m = messages[key];
+
+            // Build bubble
             const li = document.createElement("li");
             li.classList.add("message-item");
 
             const bubble = document.createElement("div");
             bubble.classList.add("message-content");
+
+            // Format time
+            const timeObj = new Date(m.timestamp || Date.now());
+            const timeStr = timeObj.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
             bubble.innerHTML = `
-              <div class="message-user">${m.user}</div>
+              <div class="message-meta">
+                <span class="message-user">${m.user}</span>
+                <span class="message-time">${timeStr}</span>
+              </div>
               <div>${m.text}</div>
             `;
 
+            // Buttons
             const opts = document.createElement("div");
             opts.classList.add("message-options");
 
             const editBtn = document.createElement("button");
             editBtn.className = "msg-btn";
-            editBtn.innerText = "Edit";
+            editBtn.innerHTML = `<i class="fa-solid fa-edit"></i>`;
             editBtn.title = "Edit this message";
             editBtn.addEventListener("click", () => editMessage(key, m.text));
 
             const delBtn = document.createElement("button");
             delBtn.className = "msg-btn";
-            delBtn.innerText = "Del";
+            delBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
             delBtn.title = "Delete this message";
             delBtn.addEventListener("click", () => deleteMessage(key));
 
             const dlBtn = document.createElement("button");
             dlBtn.className = "msg-btn";
-            dlBtn.innerText = "DL";
+            dlBtn.innerHTML = `<i class="fa-solid fa-download"></i>`;
             dlBtn.title = "Download this message";
             dlBtn.addEventListener("click", () => downloadMessage(m.text));
 
@@ -924,7 +962,12 @@
         const messages = snap.val();
         let content = "";
         Object.values(messages).forEach((m) => {
-          content += `[${m.user}] ${m.text}\n`;
+          // Also add time
+          const timeStr = new Date(m.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          content += `[${m.user} @ ${timeStr}] ${m.text}\n`;
         });
         const blob = new Blob([content], { type: "text/plain" });
         const a = document.createElement("a");
@@ -974,10 +1017,10 @@
                 <em>${c.comment}</em>
               </div>
               <button class="edit-comment" title="Edit Comment" onclick="editComment('${key}')">
-                Edit
+                <i class="fa-solid fa-edit"></i>
               </button>
               <button class="delete-comment" title="Delete Comment" onclick="deleteComment('${key}')">
-                Del
+                <i class="fa-solid fa-trash"></i>
               </button>
             `;
             commentsList.appendChild(li);
@@ -1019,20 +1062,25 @@
         const { action } = event.target.dataset;
         if (!action) return;
 
-        // Our custom highlight
-        if (action === "highlight") {
+        // In case the target is <i> inside the button
+        const realAction = action || event.target.parentNode?.dataset?.action;
+        if (!realAction) return;
+
+        // Custom highlight
+        if (realAction === "highlight") {
           highlightSelectedText();
           return;
         }
-        // Pen: apply chosen color to selected text
-        if (action === "pen") {
-          const pickedColor = colorPicker.value || "#000000";
-          document.execCommand("foreColor", false, pickedColor);
+
+        // Pen: toggle pen mode
+        if (realAction === "pen") {
+          penMode = !penMode;
+          togglePenMode(penMode);
           return;
         }
 
-        // For everything else, just execCommand
-        document.execCommand(action, false, null);
+        // Otherwise, handle standard execCommand
+        document.execCommand(realAction, false, null);
       });
 
       // For <select> changes
@@ -1048,7 +1096,6 @@
         }
       });
 
-      // Fix highlight button with a custom color
       function highlightSelectedText() {
         const selection = window.getSelection();
         if (!selection.rangeCount) return;
@@ -1060,7 +1107,77 @@
       }
 
       /****************************************
-       * 15) LIVE CURSOR TRACKING (ALWAYS SHOW)
+       * 15) PEN MODE: FREEHAND DRAW OVERLAY
+       ****************************************/
+      let penMode = false;
+      let drawing = false;
+      let ctx = null;
+
+      function togglePenMode(isOn) {
+        if (isOn) {
+          // Turn off contentEditable so the user doesn't accidentally type
+          contentArea.contentEditable = "false";
+          // Activate pen cursor
+          contentArea.classList.add("pen-active");
+          // Show overlay
+          penOverlay.style.display = "block";
+          setupCanvasOverlay();
+        } else {
+          // Re-enable typing
+          contentArea.contentEditable = "true";
+          // Hide pen cursor
+          contentArea.classList.remove("pen-active");
+          // Hide overlay
+          penOverlay.style.display = "none";
+        }
+      }
+
+      function setupCanvasOverlay() {
+        const rect = contentArea.getBoundingClientRect();
+        penOverlay.width = rect.width;
+        penOverlay.height = rect.height;
+        penOverlay.style.top = "0";
+        penOverlay.style.left = "0";
+        ctx = penOverlay.getContext("2d");
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = colorPicker.value || "#000";
+      }
+
+      // Re-size or re-setup if window changes
+      window.addEventListener("resize", () => {
+        if (penMode) setupCanvasOverlay();
+      });
+
+      // Listen for drawing events
+      penOverlay.addEventListener("mousedown", (e) => {
+        if (!penMode) return;
+        drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+      });
+      penOverlay.addEventListener("mousemove", (e) => {
+        if (!penMode || !drawing) return;
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+      });
+      penOverlay.addEventListener("mouseup", () => {
+        drawing = false;
+      });
+      penOverlay.addEventListener("mouseleave", () => {
+        drawing = false;
+      });
+
+      // If color changes in pen mode, update stroke color
+      colorPicker.addEventListener("input", () => {
+        if (penMode && ctx) {
+          ctx.strokeStyle = colorPicker.value;
+        }
+      });
+
+      /****************************************
+       * 16) LIVE CURSOR TRACKING (ALWAYS SHOW)
        ****************************************/
       let myCursorColor = localStorage.getItem("cursorColor");
       if (!myCursorColor) {
@@ -1093,7 +1210,6 @@
       });
       contentArea.addEventListener("mouseleave", (e) => {
         updateCursorPosition(e);
-        // We keep it so it's always shown, not removing the cursor
       });
 
       window.addEventListener("beforeunload", () => {
@@ -1103,7 +1219,6 @@
       onValue(ref(db, "cursors"), (snapshot) => {
         const cursorsData = snapshot.val() || {};
         document.querySelectorAll(".user-cursor").forEach((el) => el.remove());
-
         // For every user (including me)
         Object.keys(cursorsData).forEach((user) => {
           const c = cursorsData[user];
